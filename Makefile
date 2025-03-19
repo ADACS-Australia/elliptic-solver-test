@@ -7,7 +7,7 @@ LDFLAGS =  # Additional linker flags (if needed)
 TARGET = sparse_solver_test
 
 # Source files
-SRCS = sparse_solver.f90
+SRCS = datatype.f90 miccg_hormone.f90 sparse_solver.f90
 
 # Object files (automatically generated from source files)
 OBJS = $(SRCS:.f90=.o)
