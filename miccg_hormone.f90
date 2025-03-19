@@ -2,7 +2,7 @@
 module miccg_hormone
   implicit none
   private
-  public :: miccg, get_preconditioner
+  public :: miccg, get_preconditioner, Apk
 
   contains
 
@@ -22,7 +22,7 @@ subroutine miccg(cg,b,x)
   real(8),allocatable:: r(:),q(:),p(:)
   real(8):: alpha,beta,pAp,rr_old,rr,error,normb
   integer:: n,l,lmax
-  real(8),parameter:: cgerr = 1d-6
+  real(8),parameter:: cgerr = 1d-14
 
   !-----------------------------------------------------------------------------
 

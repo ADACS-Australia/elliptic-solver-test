@@ -45,18 +45,24 @@ module sparse_matrix_solver
   ! Placeholder for the solver subroutine, solving Ax = b
   subroutine solve_sparse_system(cg, b, x)
     use datatype, only: cg_set
-    use miccg_hormone, only: miccg, get_preconditioner
+    use miccg_hormone, only: miccg, get_preconditioner, Apk
     type(cg_set), intent(inout) :: cg
     real(8), allocatable, intent(in)    :: b(:)  ! Right-hand side vector
     real(8), allocatable, intent(inout) :: x(:)  ! Input vector (right-hand side or initial guess), contains the solution on output
+    real(8), allocatable :: b_verify(:)
+    real(8) :: error
     integer :: l
 
     ! Print the matrix and result for debugging
     print *, "Matrix diagonals:"
     do l = 1, cg%Adiags
+      if (cg%lmax > 5) then
+      print *, "Diagonal ", cg%ia(l), ": ", cg%A(l, 1:5), "... (truncated)"
+      else
       print *, "Diagonal ", cg%ia(l), ": ", cg%A(l, :)
+      end if
     end do
-    print *, "Input vector x: ", x
+    print *, "Input vector x: ", x(1:5)
 
     ! Call the MICCG solver
     print *, "Calling the MICCG solver..."
@@ -64,7 +70,20 @@ module sparse_matrix_solver
 
     call miccg(cg, b, x)
     print*, "MICCG solver finished"
-    print *, "Solution vector x: ", x
+    print *, "Solution vector x: ", x(1:5)
+
+    ! Verify solution
+    allocate(b_verify(size(x)))
+    call Apk(cg,x,b_verify)
+    ! Error in solution
+    error = sum(abs(b/b_verify - 1))/size(b)
+    print*, "Error in solution: ", error
+    if (error > 1.0d-5) then
+      print*, "Error in solution is too large"
+    else
+      print*, "Solution is correct"
+    end if
+
   end subroutine solve_sparse_system
 
 end module sparse_matrix_solver
@@ -75,23 +94,91 @@ program test_sparse_solver
   implicit none
 
   type(cg_set) :: cg
-  integer, parameter :: lmax = 5  ! Size of the matrix
+  integer :: lmax  ! Size of the matrix
   real(8), allocatable :: x(:) ! Input/output vector
   real(8), allocatable :: b(:) ! Right-hand side vector
 
-  ! Allocate memory for x and b
-  allocate(x(lmax), b(lmax))
+  real(8), allocatable :: x_ref(:) ! Reference solution
 
-  ! Set up the test matrix
-  call setup_matrix(cg, lmax)
+  logical :: use_reference_matrix = .true.
 
-  ! Set up a test right-hand side vector b
-  b = [2.0d0, 3.0d0, 1.0d0, 5.0d0, 4.0d0]
+  ! ------------------------------------------------------------
+  if (use_reference_matrix) then
+    print*, "Using reference matrix"
 
-  ! Set up a test input vector x
-  x = [1.0d0, 2.0d0, 3.0d0, 4.0d0, 5.0d0]
+    ! Read array sizes from text file
+    open(unit=13, file="reference_matrix/array_size.txt", status="old", &
+         form="formatted", action="read")
+    read(13, '(I4)') lmax
+    close(13)
+
+    print*, "Reference matrix lmax: ", lmax
+
+    ! Allocate arrays
+    allocate(x(lmax), b(lmax))
+    allocate(x_ref(lmax))
+    cg%lmax = lmax
+    cg%Adiags = 2
+    cg%cdiags = 2
+    allocate(cg%A(cg%Adiags, cg%lmax))
+    allocate(cg%c(cg%cdiags, cg%lmax))
+    allocate(cg%ia(cg%Adiags))
+    allocate(cg%ic(cg%cdiags))
+    cg%ia = [0, 1]
+    cg%ic = [0, 1]
+
+    ! Read matrix data from binary dumps
+    open(unit=10, file="reference_matrix/A_dump.bin", status="old", form="unformatted")
+    read(10) cg%A
+    close(10)
+
+    open(unit=10, file="reference_matrix/ia_dump.bin", status="old", form="unformatted")
+    read(10) cg%ia
+    close(10)
+
+    ! Read right-hand side vector
+    open(unit=10, file="reference_matrix/rsrc_dump.bin", status="old", form="unformatted")
+    read(10) b
+    close(10)
+
+    ! Read initial x vector
+    open(unit=10, file="reference_matrix/x_dump.bin", status="old", form="unformatted")
+    read(10) x
+    close(10)
+
+    ! Read reference solution
+    open(unit=10, file="reference_matrix/x_updated.bin", status="old", form="unformatted")
+    read(10) x_ref
+    close(10)
+  ! ------------------------------------------------------------
+  else
+    print*, "Generating test matrix"
+    ! Generate test matrix
+    lmax = 5
+
+    ! Allocate memory for x and b
+    allocate(x(lmax), b(lmax))
+
+    ! Set up the test matrix
+    call setup_matrix(cg, lmax)
+
+    ! Set up a test right-hand side vector b
+    b = [2.0d0, 3.0d0, 1.0d0, 5.0d0, 4.0d0]
+
+    ! Set up a test input vector x
+    x = [1.0d0, 2.0d0, 3.0d0, 4.0d0, 5.0d0]
+  endif
+  ! ------------------------------------------------------------
 
   ! Call the solver (placeholder implementation)
   call solve_sparse_system(cg, b, x)
+
+  ! If x_ref is available, compare the solution
+  if (use_reference_matrix) then
+    print*, "Comparing the solution with the reference solution"
+    print*, "Reference solution: ", x_ref(1:5)
+    print*, "Computed solution: ", x(1:5)
+    print*, "Error in solution: ", sum(abs(x/x_ref - 1))/size(x)
+  endif
 
 end program test_sparse_solver
