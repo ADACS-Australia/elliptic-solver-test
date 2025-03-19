@@ -51,18 +51,6 @@ module sparse_matrix_solver
     real(8), allocatable, intent(inout) :: x(:)  ! Input vector (right-hand side or initial guess), contains the solution on output
     real(8), allocatable :: b_verify(:)
     real(8) :: error
-    integer :: l
-
-    ! Print the matrix and result for debugging
-    print *, "Matrix diagonals:"
-    do l = 1, cg%Adiags
-      if (cg%lmax > 5) then
-      print *, "Diagonal ", cg%ia(l), ": ", cg%A(l, 1:5), "... (truncated)"
-      else
-      print *, "Diagonal ", cg%ia(l), ": ", cg%A(l, :)
-      end if
-    end do
-    print *, "Input vector x: ", x(1:5)
 
     ! Call the MICCG solver
     print *, "Calling the MICCG solver..."
@@ -70,18 +58,18 @@ module sparse_matrix_solver
 
     call miccg(cg, b, x)
     print*, "MICCG solver finished"
-    print *, "Solution vector x: ", x(1:5)
 
     ! Verify solution
+    print*, "Verifying solution by multiplying Ax"
     allocate(b_verify(size(x)))
     call Apk(cg,x,b_verify)
     ! Error in solution
     error = sum(abs(b/b_verify - 1))/size(b)
-    print*, "Error in solution: ", error
+    print*, "  Error in b: ", error
     if (error > 1.0d-5) then
-      print*, "Error in solution is too large"
+      print*, "  Error in b is too large"
     else
-      print*, "Solution is correct"
+      print*, "  Solution is correct"
     end if
 
   end subroutine solve_sparse_system
@@ -104,7 +92,41 @@ program test_sparse_solver
 
   ! ------------------------------------------------------------
   if (use_reference_matrix) then
-    print*, "Using reference matrix"
+    print*, "  Using reference matrix"
+
+    ! Files dumped from radshock_x test, using:
+
+    ! ! Export A and ia from cg into separate binary dump files
+    ! open(unit=10, file="A_dump.bin", form="unformatted", status="replace")
+    ! write(10) cg%A
+    ! close(10)
+
+    ! open(unit=11, file="ia_dump.bin", form="unformatted", status="replace")
+    ! write(11) cg%ia
+    ! close(11)
+
+    ! open(unit=11, file="rsrc_dump.bin", form="unformatted", status="replace")
+    ! write(11) rsrc
+    ! close(11)
+
+    ! open(unit=12, file="x_dump.bin", form="unformatted", status="replace")
+    ! write(12) x
+    ! close(12)
+
+    ! ! Write the size information to a text file
+    ! open(unit=13, file="array_size.txt", form="formatted", status="replace")
+    ! write(13, '(I0)') cg%lmax
+    ! close(13)
+
+    ! call miccg(cg, rsrc, x) ! returns erad^{n+1}
+
+    ! ! Write the updated x to a binary file
+    ! open(unit=14, file="x_updated.bin", form="unformatted", status="replace")
+    ! write(14) x
+    ! close(14)
+
+    ! stop 'Files dumped'
+
 
     ! Read array sizes from text file
     open(unit=13, file="reference_matrix/array_size.txt", status="old", &
@@ -175,10 +197,8 @@ program test_sparse_solver
 
   ! If x_ref is available, compare the solution
   if (use_reference_matrix) then
-    print*, "Comparing the solution with the reference solution"
-    print*, "Reference solution: ", x_ref(1:5)
-    print*, "Computed solution: ", x(1:5)
-    print*, "Error in solution: ", sum(abs(x/x_ref - 1))/size(x)
+    print*, "Comparing the solution with the reference solution:"
+    print*, "  Error in solution: ", sum(abs(x/x_ref - 1))/size(x)
   endif
 
 end program test_sparse_solver
