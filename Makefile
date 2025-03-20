@@ -1,16 +1,22 @@
 # Compiler and flags
 FC = gfortran
+
+PETSC_DIR = /Users/david/miniforge3/envs/petsc
+
 FFLAGS = -O2 -Wall -Wextra -fcheck=all -g  # Debugging and optimization flags
-LDFLAGS =  # Additional linker flags (if needed)
+
+CFLAGS = -I$(PETSC_DIR)/include
+LDFLAGS = -L$(PETSC_DIR)/lib -lpetsc
 
 # Program name
 TARGET = sparse_solver_test
 
 # Source files
-SRCS = datatype.f90 miccg_hormone.f90 sparse_solver.f90
+SRCS = datatype.f90 miccg_hormone.f90 sparse_solver_petsc.F90 sparse_solver.f90
 
 # Object files (automatically generated from source files)
-OBJS = $(SRCS:.f90=.o)
+OBJS1 = $(SRCS:.f90=.o)
+OBJS = $(OBJS1:.F90=.o)
 
 # Default target
 all: $(TARGET)
@@ -22,6 +28,10 @@ $(TARGET): $(OBJS)
 # Rule to compile Fortran source files into object files
 %.o: %.f90
 	$(FC) $(FFLAGS) -c -o $@ $<
+
+# Rule to compile Fortran source files into object files
+%.o: %.F90
+	$(FC) $(FFLAGS) $(CFLAGS) -c -o $@ $<
 
 # Clean up build files
 clean:

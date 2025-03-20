@@ -51,13 +51,18 @@ module sparse_matrix_solver
     real(8), allocatable, intent(inout) :: x(:)  ! Input vector (right-hand side or initial guess), contains the solution on output
     real(8), allocatable :: b_verify(:)
     real(8) :: error
+    real(8) :: start_time, end_time
 
+    call cpu_time(start_time)
     ! Call the MICCG solver
     print *, "Calling the MICCG solver..."
     call get_preconditioner(cg)
 
     call miccg(cg, b, x)
     print*, "MICCG solver finished"
+    call cpu_time(end_time)
+
+    print*, "Time taken: ", end_time - start_time
 
     ! Verify solution
     print*, "Verifying solution by multiplying Ax"
@@ -79,6 +84,7 @@ end module sparse_matrix_solver
 program test_sparse_solver
   use datatype, only: cg_set
   use sparse_matrix_solver, only: setup_matrix, solve_sparse_system
+  use petsc_solver, only: sparse_solve
   implicit none
 
   type(cg_set) :: cg
@@ -195,6 +201,13 @@ program test_sparse_solver
   ! Call the solver (placeholder implementation)
   call solve_sparse_system(cg, b, x)
 
+  ! If x_ref is available, compare the solution
+  if (use_reference_matrix) then
+    print*, "Comparing the solution with the reference solution:"
+    print*, "  Error in solution: ", sum(abs(x/x_ref - 1))/size(x)
+  endif
+
+  call sparse_solve(cg, b, x)
   ! If x_ref is available, compare the solution
   if (use_reference_matrix) then
     print*, "Comparing the solution with the reference solution:"
