@@ -12,7 +12,7 @@ module solver
 
   ! Placeholder for the solver subroutine, solving Ax = b
   subroutine solve_sparse_system(cg, b, x, solver)
-    use miccg_hormone, only: miccg, get_preconditioner
+    use hormone_routines, only: miccg, get_preconditioner
     use petsc_solver, only: solve_system_petsc
     type(cg_set), intent(inout) :: cg
     real(8), allocatable, intent(in)    :: b(:)  ! Right-hand side vector

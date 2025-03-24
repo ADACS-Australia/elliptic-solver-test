@@ -7,7 +7,7 @@ contains
 
 ! Verify solution by multiplying Ax
 subroutine verify(cg, x, b)
-  use miccg_hormone, only: Apk
+  use hormone_routines, only: Apk
   type(cg_set), intent(in) :: cg
   real(8), dimension(:), allocatable, intent(in) :: x
   real(8), dimension(:), allocatable, intent(in) :: b

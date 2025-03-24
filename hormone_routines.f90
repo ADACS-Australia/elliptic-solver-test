@@ -1,5 +1,5 @@
 ! HORMONE's implementation of the MICCG solver
-module miccg_hormone
+module hormone_routines
   use datatype, only: cg_set
   implicit none
   private
@@ -260,4 +260,4 @@ subroutine get_preconditioner(cg)
  end subroutine get_preconditioner
 
 
-end module miccg_hormone
+end module hormone_routines
