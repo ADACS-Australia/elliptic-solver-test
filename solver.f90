@@ -10,7 +10,6 @@ module solver
 
   contains
 
-  ! Placeholder for the solver subroutine, solving Ax = b
   subroutine solve_sparse_system(cg, b, x, solver)
     use hormone_routines, only: miccg, get_preconditioner
     use petsc_solver, only: solve_system_petsc

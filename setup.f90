@@ -99,7 +99,7 @@ module setup
     read(13, '(I4)') lmax
     close(13)
 
-    print*, "lmax: ", lmax
+    print*, "    lmax: ", lmax
 
     ! Allocate arrays
     allocate(x(lmax), b(lmax))

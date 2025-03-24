@@ -5,11 +5,11 @@ program test_sparse_solver
   use tools, only: verify, compare
 
   implicit none
+
   type(cg_set) :: cg
   real(8), allocatable :: x(:) ! Input/output vector
   real(8), allocatable :: b(:) ! Right-hand side vector
   real(8), allocatable :: x_ref(:) ! Reference solution
-
   logical :: use_reference_matrix = .true.
 
   call setup_system(cg, x, b, x_ref, use_reference_matrix)

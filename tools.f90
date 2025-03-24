@@ -2,7 +2,9 @@ module tools
   use datatype, only: cg_set
   implicit none
   private
+
   public :: verify, compare
+
 contains
 
 ! Verify solution by multiplying Ax
@@ -23,6 +25,7 @@ subroutine verify(cg, x, b)
 
 end subroutine verify
 
+! Compare with a reference solution
 subroutine compare(x, x_ref)
   real(8), allocatable, intent(in) :: x(:), x_ref(:)
 

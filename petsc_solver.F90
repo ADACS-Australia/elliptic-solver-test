@@ -2,9 +2,9 @@ module petsc_solver
   use datatype, only: cg_set
 #include <petsc/finclude/petsc.h>
   use petsc
-
   implicit none
   private
+
   public :: solve_system_petsc
 
   PetscErrorCode :: ierr
