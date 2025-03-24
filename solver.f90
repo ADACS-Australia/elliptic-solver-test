@@ -12,7 +12,7 @@ module solver
 
   subroutine solve_sparse_system(cg, b, x, solver)
     use hormone_routines, only: miccg, get_preconditioner
-    use petsc_solver, only: solve_system_petsc
+    use petsc_routines, only: solve_system_petsc
     type(cg_set), intent(inout) :: cg
     real(8), allocatable, intent(in)    :: b(:)  ! Right-hand side vector
     real(8), allocatable, intent(inout) :: x(:)  ! Input vector (right-hand side or initial guess), contains the solution on output

@@ -1,11 +1,11 @@
-module petsc_solver
+module petsc_routines
   use datatype, only: cg_set
 #include <petsc/finclude/petsc.h>
   use petsc
   implicit none
   private
 
-  public :: solve_system_petsc
+  public :: solve_system_petsc, init_petsc, finalise_petsc
 
   PetscErrorCode :: ierr
   Mat :: A_petsc
@@ -21,7 +21,8 @@ module petsc_solver
     real(8), intent(out) :: start_time, end_time
 
     ! Initialise PETSc and setup all the data structures
-    call init_petsc(cg, b)
+    call init_petsc()
+    call setup_petsc(cg, b)
 
     ! Only time the actual solve
     call cpu_time(start_time)
@@ -38,20 +39,22 @@ module petsc_solver
 
     ! Clean up PETSc and free all the data structures
     call cleanup_petsc()
+    call finalise_petsc()
 
   end subroutine solve_system_petsc
 
-  subroutine init_petsc(cg,b)
+  subroutine init_petsc
+    call PetscInitialize(PETSC_NULL_CHARACTER, ierr)
+    if (ierr /= 0) stop 'PETSc initialization failed'
+  end subroutine init_petsc
+
+  subroutine setup_petsc(cg,b)
     type(cg_set), intent(inout) :: cg
     real(8), allocatable, intent(in) :: b(:)  ! Right-hand side vector
     integer :: row, col, d
     PetscInt    :: n
     PetscScalar :: val
     PetscScalar, pointer :: vec_ptr(:)
-
-    ! Initialize PETSc
-    call PetscInitialize(PETSC_NULL_CHARACTER, ierr)
-    if (ierr /= 0) stop 'PETSc initialization failed'
 
     ! Set matrix and vector size
     n = size(b)
@@ -92,7 +95,7 @@ module petsc_solver
     call KSPSetOperators(ksp, A_petsc, A_petsc, ierr)
     call KSPSetFromOptions(ksp, ierr)
 
-  end subroutine init_petsc
+  end subroutine setup_petsc
 
   subroutine solve_petsc
     call KSPSolve(ksp, b_petsc, x_petsc, ierr)
@@ -113,8 +116,10 @@ module petsc_solver
     call VecDestroy(b_petsc, ierr)
     call VecDestroy(x_petsc, ierr)
     call MatDestroy(A_petsc, ierr)
-
-    call PetscFinalize(ierr)
   end subroutine cleanup_petsc
 
-end module petsc_solver
+  subroutine finalise_petsc
+    call PetscFinalize(ierr)
+  end subroutine finalise_petsc
+
+end module petsc_routines
