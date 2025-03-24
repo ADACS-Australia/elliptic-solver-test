@@ -23,20 +23,19 @@ module solver
 
     select case (solver)
     case (1)
-      print*, "==> Using MICCG solver..."
+      print*, "--> Solving using hormone MICCG..."
       call get_preconditioner(cg)
       call miccg(cg, b, x)
     case (2)
-      print*, "==> Using PETSc solver..."
+      print*, "--> Solving using PETSc..."
       stop "PETSc solver not implemented yet"
     case default
-      print*, "Error: Unknown solver"
-      stop
+      stop "Error: Unknown solver"
     end select
 
     call cpu_time(end_time)
 
-    print*, "Time taken: ", end_time - start_time
+    print*, "    Time taken: ", end_time - start_time
 
   end subroutine solve_sparse_system
 

@@ -1,8 +1,6 @@
 module setup
   use datatype, only: cg_set
-
   implicit none
-
   private
 
   public :: setup_system
@@ -11,7 +9,6 @@ module setup
 
   ! Subroutine to set up the test matrix
   subroutine setup_simple(cg, x, b)
-
     type(cg_set), intent(out) :: cg
     real(8), allocatable, intent(inout) :: x(:), b(:)
     integer, parameter :: Adiags = 2  ! Number of diagonals
@@ -102,7 +99,7 @@ module setup
     read(13, '(I4)') lmax
     close(13)
 
-    print*, "Reference matrix lmax: ", lmax
+    print*, "lmax: ", lmax
 
     ! Allocate arrays
     allocate(x(lmax), b(lmax))
@@ -144,9 +141,6 @@ module setup
   end subroutine setup_reference
 
   subroutine setup_system(cg, x, b, x_ref, use_reference_matrix)
-  use datatype, only: cg_set
-  use petsc_solver, only: sparse_solve
-
   type(cg_set), intent(inout) :: cg
   real(8), allocatable, intent(inout) :: x(:) ! Input/output vector
   real(8), allocatable, intent(inout) :: b(:) ! Right-hand side vector
@@ -154,10 +148,10 @@ module setup
   logical, intent(in) :: use_reference_matrix
 
   if (use_reference_matrix) then
-    print*, "==> Using reference matrix"
+    print*, "--> Reading reference matrix"
     call setup_reference(cg, x, b, x_ref)
   else
-    print*, "==> Generating test matrix"
+    print*, "--> Generating test matrix"
     call setup_simple(cg, x, b)
   endif
 

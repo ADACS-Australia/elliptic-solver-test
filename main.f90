@@ -15,10 +15,14 @@ program test_sparse_solver
 
   call setup_system(cg, x, b, x_ref, use_reference_matrix)
 
+  print*, "----------------------------------------"
+
   ! Call the solver (placeholder implementation)
   call solve_sparse_system(cg, b, x, miccg_solver)
   call verify(cg, x, b)
   if (use_reference_matrix) call compare(x, x_ref)
+
+  print*, "----------------------------------------"
 
   !-- PETSc solver ---!
   call sparse_solve(cg, b, x)
