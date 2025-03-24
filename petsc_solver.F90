@@ -1,25 +1,52 @@
 module petsc_solver
+  use datatype, only: cg_set
 #include <petsc/finclude/petsc.h>
   use petsc
 
   implicit none
   private
-  public :: sparse_solve
+  public :: solve_system_petsc
+
+  PetscErrorCode :: ierr
+  Mat :: A_petsc
+  Vec :: x_petsc, b_petsc
+  KSP :: ksp
 
   contains
-  subroutine sparse_solve(cg,b,x)
-    use datatype, only: cg_set
+
+  subroutine solve_system_petsc(cg,b,x,start_time,end_time)
     type(cg_set), intent(inout) :: cg
     real(8), allocatable, intent(in)    :: b(:)  ! Right-hand side vector
     real(8), allocatable, intent(inout) :: x(:)  ! Input vector (right-hand side or initial guess), contains the solution on output
+    real(8), intent(out) :: start_time, end_time
+
+    ! Initialise PETSc and setup all the data structures
+    call init_petsc(cg, b)
+
+    ! Only time the actual solve
+    call cpu_time(start_time)
+    call solve_petsc()
+    call cpu_time(end_time)
+
+    ! Get the solution back into a fortran array
+    call get_solution_f90(x)
+
+    ! View the solution
+    ! call VecView(x_petsc, PETSC_VIEWER_STDOUT_WORLD, ierr)
+    ! View matrix
+    ! call MatView(A_petsc, PETSC_VIEWER_STDOUT_WORLD, ierr)
+
+    ! Clean up PETSc and free all the data structures
+    call cleanup_petsc()
+
+  end subroutine solve_system_petsc
+
+  subroutine init_petsc(cg,b)
+    type(cg_set), intent(inout) :: cg
+    real(8), allocatable, intent(in) :: b(:)  ! Right-hand side vector
     integer :: row, col, d
-    real(8) :: start_time, end_time
-    PetscErrorCode :: ierr
-    Mat            :: A_petsc
-    Vec            :: x_petsc, b_petsc
-    KSP            :: ksp
-    PetscInt       :: n
-    PetscScalar    :: val
+    PetscInt    :: n
+    PetscScalar :: val
     PetscScalar, pointer :: vec_ptr(:)
 
     ! Initialize PETSc
@@ -65,30 +92,29 @@ module petsc_solver
     call KSPSetOperators(ksp, A_petsc, A_petsc, ierr)
     call KSPSetFromOptions(ksp, ierr)
 
-    ! Solve Ax = b
-    call cpu_time(start_time)  ! Start timing
-    call KSPSolve(ksp, b_petsc, x_petsc, ierr)
-    call cpu_time(end_time)  ! End timing
-    write(*,*) 'Time taken for KSPSolve: ', end_time-start_time, ' seconds'
+  end subroutine init_petsc
 
-    ! View the solution
-    ! call VecView(x_petsc, PETSC_VIEWER_STDOUT_WORLD, ierr)
+  subroutine solve_petsc
+    call KSPSolve(ksp, b_petsc, x_petsc, ierr)
+  end subroutine solve_petsc
+
+  subroutine get_solution_f90(x)
+    real(8), allocatable, intent(inout) :: x(:)
+    PetscScalar, pointer :: vec_ptr(:)
 
     call VecGetArrayF90(x_petsc, vec_ptr, ierr)
     x(:) = vec_ptr(:)
     call VecRestoreArrayF90(x_petsc, vec_ptr, ierr)
 
-    ! view matrix
-    ! call MatView(A_petsc, PETSC_VIEWER_STDOUT_WORLD, ierr)
+  end subroutine get_solution_f90
 
-    ! Clean up
+  subroutine cleanup_petsc
     call KSPDestroy(ksp, ierr)
     call VecDestroy(b_petsc, ierr)
     call VecDestroy(x_petsc, ierr)
     call MatDestroy(A_petsc, ierr)
 
-    ! Finalize PETSc
     call PetscFinalize(ierr)
-  end subroutine sparse_solve
+  end subroutine cleanup_petsc
 
 end module petsc_solver

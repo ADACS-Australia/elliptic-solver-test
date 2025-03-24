@@ -1,8 +1,7 @@
 program test_sparse_solver
   use datatype, only: cg_set
   use setup, only: setup_system
-  use solver, only: solve_sparse_system, miccg_solver
-  use petsc_solver, only: sparse_solve
+  use solver, only: solve_sparse_system, miccg_solver, petsc_solver
   use tools, only: verify, compare
 
   implicit none
@@ -25,7 +24,7 @@ program test_sparse_solver
   print*, "----------------------------------------"
 
   !-- PETSc solver ---!
-  call sparse_solve(cg, b, x)
+  call solve_sparse_system(cg, b, x, petsc_solver)
   call verify(cg, x, b)
   if (use_reference_matrix) call compare(x, x_ref)
 
