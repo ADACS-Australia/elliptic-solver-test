@@ -1,5 +1,6 @@
 ! HORMONE's implementation of the MICCG solver
 module miccg_hormone
+  use datatype, only: cg_set
   implicit none
   private
   public :: miccg, get_preconditioner, Apk
@@ -15,7 +16,6 @@ module miccg_hormone
 ! PURPOSE: To solve Ax=b using the MICCG method
 
 subroutine miccg(cg,b,x)
-  use datatype, only: cg_set
   type(cg_set),intent(in):: cg
   real(8),allocatable,intent(in):: b(:)
   real(8),allocatable,intent(inout):: x(:)
@@ -131,10 +131,9 @@ end subroutine miccg
 ! PURPOSE: To calculate A*p_k
 
 subroutine Apk(cg,p,q)
-  use datatype, only: cg_set
-  type(cg_set),intent(in):: cg
-  real(8),allocatable,intent(in):: p(:)
-  real(8),allocatable,intent(inout):: q(:)
+  type(cg_set),intent(in) :: cg
+  real(8), intent(in) :: p(:)
+  real(8), intent(inout) :: q(:)
   integer::l,ll,m
 
   !-----------------------------------------------------------------------------
@@ -163,7 +162,6 @@ end subroutine Apk
 !          q = (CC^T)^{-1}r_k
 
 subroutine cctr(cg,r,q)
-  use datatype, only: cg_set
   type(cg_set),intent(in):: cg
   real(8),allocatable,intent(in):: r(:)
   real(8),allocatable,intent(inout):: q(:)
@@ -207,7 +205,6 @@ end subroutine cctr
 ! PURPOSE: To calculate preconditioner matrix elements
 
 subroutine get_preconditioner(cg)
-  use datatype, only: cg_set
   type(cg_set),intent(inout):: cg
   integer:: l,ll,ld,i,n,m
   logical:: found
@@ -258,7 +255,6 @@ subroutine get_preconditioner(cg)
    end do
 
   end do
-
 
  return
  end subroutine get_preconditioner

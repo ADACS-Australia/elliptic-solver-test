@@ -1,8 +1,9 @@
 program test_sparse_solver
   use datatype, only: cg_set
   use setup, only: setup_system
-  use solver, only: solve_sparse_system
+  use solver, only: solve_sparse_system, miccg_solver
   use petsc_solver, only: sparse_solve
+  use tools, only: verify, compare
 
   implicit none
   type(cg_set) :: cg
@@ -14,23 +15,14 @@ program test_sparse_solver
 
   call setup_system(cg, x, b, x_ref, use_reference_matrix)
 
-  !-- MICCG solver ---!
   ! Call the solver (placeholder implementation)
-  call solve_sparse_system(cg, b, x)
-
-  ! If x_ref is available, compare the solution
-  if (use_reference_matrix) then
-    print*, "Comparing the solution with the reference solution:"
-    print*, "  Error in solution: ", sum(abs(x/x_ref - 1))/size(x)
-  endif
+  call solve_sparse_system(cg, b, x, miccg_solver)
+  call verify(cg, x, b)
+  if (use_reference_matrix) call compare(x, x_ref)
 
   !-- PETSc solver ---!
   call sparse_solve(cg, b, x)
-
-  ! If x_ref is available, compare the solution
-  if (use_reference_matrix) then
-    print*, "Comparing the solution with the reference solution:"
-    print*, "  Error in solution: ", sum(abs(x/x_ref - 1))/size(x)
-  endif
+  call verify(cg, x, b)
+  if (use_reference_matrix) call compare(x, x_ref)
 
 end program test_sparse_solver

@@ -12,7 +12,7 @@ LDFLAGS = -L$(PETSC_DIR)/lib -lpetsc
 TARGET = sparse_solver_test
 
 # Source files
-SRCS = datatype.f90 miccg_hormone.f90 petsc_solver.F90 setup.f90 solver.f90 main.f90
+SRCS = datatype.f90 miccg_hormone.f90 tools.f90 petsc_solver.F90 setup.f90 solver.f90 main.f90
 
 # Object files (automatically generated from source files)
 OBJS1 = $(SRCS:.f90=.o)

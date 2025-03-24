@@ -1,18 +1,26 @@
 module setup
+  use datatype, only: cg_set
+
   implicit none
+
   private
-  public :: setup_matrix, setup_system
+
+  public :: setup_system
 
   contains
 
   ! Subroutine to set up the test matrix
-  subroutine setup_matrix(cg, lmax)
-    use datatype, only: cg_set
+  subroutine setup_simple(cg, x, b)
+
     type(cg_set), intent(out) :: cg
-    integer, intent(in) :: lmax
-    integer :: l
+    real(8), allocatable, intent(inout) :: x(:), b(:)
     integer, parameter :: Adiags = 2  ! Number of diagonals
     integer, parameter :: cdiags = 2  ! Number of diagonals
+    integer, parameter :: lmax = 5    ! Number of rows/columns
+    integer :: l  ! Loop index
+
+    ! Allocate memory for x and b
+    allocate(x(lmax), b(lmax))
 
     ! Allocate memory for the matrix
     cg%lmax = lmax
@@ -40,22 +48,19 @@ module setup
     cg%ic = [0, 1]  ! Example: main diagonal, first upper
 
     cg%alpha = 0.99d0
-  end subroutine setup_matrix
 
-  subroutine setup_system(cg, x, b, x_ref, use_reference_matrix)
-  use datatype, only: cg_set
-  use petsc_solver, only: sparse_solve
+    ! Set up a test right-hand side vector b
+    b = [2.0d0, 3.0d0, 1.0d0, 5.0d0, 4.0d0]
 
-  type(cg_set), intent(inout) :: cg
-  real(8), allocatable, intent(inout) :: x(:) ! Input/output vector
-  real(8), allocatable, intent(inout) :: b(:) ! Right-hand side vector
-  real(8), allocatable, intent(inout) :: x_ref(:) ! Reference solution
-  logical, intent(in) :: use_reference_matrix
+    ! Set up a test input vector x
+    x = [1.0d0, 2.0d0, 3.0d0, 4.0d0, 5.0d0]
+
+  end subroutine setup_simple
+
+  subroutine setup_reference(cg, x, b, x_ref)
+  type(cg_set), intent(out) :: cg
+  real(8), allocatable, intent(inout) :: x(:), b(:), x_ref(:)
   integer :: lmax  ! Size of the matrix
-
-  ! ------------------------------------------------------------
-  if (use_reference_matrix) then
-    print*, "  Using reference matrix"
 
     ! Files dumped from radshock_x test, using:
 
@@ -135,25 +140,26 @@ module setup
     open(unit=10, file="reference_matrix/x_updated.bin", status="old", form="unformatted")
     read(10) x_ref
     close(10)
-  ! ------------------------------------------------------------
+
+  end subroutine setup_reference
+
+  subroutine setup_system(cg, x, b, x_ref, use_reference_matrix)
+  use datatype, only: cg_set
+  use petsc_solver, only: sparse_solve
+
+  type(cg_set), intent(inout) :: cg
+  real(8), allocatable, intent(inout) :: x(:) ! Input/output vector
+  real(8), allocatable, intent(inout) :: b(:) ! Right-hand side vector
+  real(8), allocatable, intent(inout) :: x_ref(:) ! Reference solution
+  logical, intent(in) :: use_reference_matrix
+
+  if (use_reference_matrix) then
+    print*, "==> Using reference matrix"
+    call setup_reference(cg, x, b, x_ref)
   else
-    print*, "Generating test matrix"
-    ! Generate test matrix
-    lmax = 5
-
-    ! Allocate memory for x and b
-    allocate(x(lmax), b(lmax))
-
-    ! Set up the test matrix
-    call setup_matrix(cg, lmax)
-
-    ! Set up a test right-hand side vector b
-    b = [2.0d0, 3.0d0, 1.0d0, 5.0d0, 4.0d0]
-
-    ! Set up a test input vector x
-    x = [1.0d0, 2.0d0, 3.0d0, 4.0d0, 5.0d0]
+    print*, "==> Generating test matrix"
+    call setup_simple(cg, x, b)
   endif
-  ! ------------------------------------------------------------
 
   end subroutine setup_system
 
