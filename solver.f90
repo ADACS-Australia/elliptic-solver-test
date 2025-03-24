@@ -21,14 +21,14 @@ module solver
     real(8) :: start_time, end_time
 
     select case (solver)
-    case (1)
+    case (miccg_solver)
       print*, "--> Solving using hormone MICCG..."
       call cpu_time(start_time)
       call get_preconditioner(cg)
       call miccg(cg, b, x)
       call cpu_time(end_time)
 
-    case (2)
+    case (petsc_solver)
       print*, "--> Solving using PETSc..."
       call solve_system_petsc(cg, b, x, start_time, end_time)
 
