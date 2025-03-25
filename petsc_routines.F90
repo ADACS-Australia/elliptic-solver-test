@@ -94,6 +94,7 @@ module petsc_routines
     call KSPCreate(PETSC_COMM_WORLD, ksp, ierr)
     call KSPSetOperators(ksp, A_petsc, A_petsc, ierr)
     call KSPSetFromOptions(ksp, ierr)
+    call KSPSetup(ksp, ierr)
 
   end subroutine setup_petsc
 
