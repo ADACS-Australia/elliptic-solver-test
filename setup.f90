@@ -57,7 +57,7 @@ module setup
   subroutine setup_reference(cg, x, b, x_ref)
   type(cg_set), intent(out) :: cg
   real(8), allocatable, intent(inout) :: x(:), b(:), x_ref(:)
-  integer :: lmax  ! Size of the matrix
+  integer :: lmax, Adiags, cdiags  ! Size of the matrix
 
     ! Files dumped from radshock_x test, using:
 
@@ -99,20 +99,31 @@ module setup
     read(13, '(I4)') lmax
     close(13)
 
+    open(unit=13, file="reference_matrix/Adiags.txt", status="old", &
+    form="formatted", action="read")
+    read(13, '(I4)') Adiags
+    close(13)
+
+    open(unit=13, file="reference_matrix/cdiags.txt", status="old", &
+    form="formatted", action="read")
+    read(13, '(I4)') cdiags
+    close(13)
+
     print*, "    lmax: ", lmax
+    print*, "    Adiags: ", Adiags
+    print*, "    cdiags: ", cdiags
 
     ! Allocate arrays
     allocate(x(lmax), b(lmax))
     allocate(x_ref(lmax))
+    allocate(cg%A(Adiags, lmax))
+    allocate(cg%c(cdiags, lmax))
+    allocate(cg%ia(Adiags))
+    allocate(cg%ic(cdiags))
+
     cg%lmax = lmax
-    cg%Adiags = 2
-    cg%cdiags = 2
-    allocate(cg%A(cg%Adiags, cg%lmax))
-    allocate(cg%c(cg%cdiags, cg%lmax))
-    allocate(cg%ia(cg%Adiags))
-    allocate(cg%ic(cg%cdiags))
-    cg%ia = [0, 1]
-    cg%ic = [0, 1]
+    cg%Adiags = Adiags
+    cg%cdiags = cdiags
 
     ! Read matrix data from binary dumps
     open(unit=10, file="reference_matrix/A_dump.bin", status="old", form="unformatted")
@@ -121,6 +132,10 @@ module setup
 
     open(unit=10, file="reference_matrix/ia_dump.bin", status="old", form="unformatted")
     read(10) cg%ia
+    close(10)
+
+    open(unit=10, file="reference_matrix/ic_dump.bin", status="old", form="unformatted")
+    read(10) cg%ic
     close(10)
 
     ! Read right-hand side vector
