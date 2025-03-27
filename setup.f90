@@ -96,17 +96,17 @@ module setup
     ! Read array sizes from text file
     open(unit=13, file="reference_matrix/array_size.txt", status="old", &
          form="formatted", action="read")
-    read(13, '(I4)') lmax
+    read(13, '(I6)') lmax
     close(13)
 
     open(unit=13, file="reference_matrix/Adiags.txt", status="old", &
     form="formatted", action="read")
-    read(13, '(I4)') Adiags
+    read(13, '(I6)') Adiags
     close(13)
 
     open(unit=13, file="reference_matrix/cdiags.txt", status="old", &
     form="formatted", action="read")
-    read(13, '(I4)') cdiags
+    read(13, '(I6)') cdiags
     close(13)
 
     print*, "    lmax: ", lmax

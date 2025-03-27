@@ -1,0 +1,3 @@
+lmax: 1024
+rsrc size: 1024
+x size: 1024
