@@ -1,9 +1,11 @@
 pkgconf = $(shell command -v pkgconf || command -v pkg-config)
 
-ifdef $(PETSC_STATIC)
-  PETSC_STATIC = --static
+# Usefule as an escape hatch if libpetsc.so was not compiled properly
+# and has missing symbols from external libraries.
+ifeq ($(PETSC_STATIC), yes)
+  STATIC = "--static"
 else
-  PETSC_STATIC =
+  STATIC =
 endif
 
 # Check if pkgconf is installed
@@ -37,4 +39,4 @@ petscvariables = $(shell $(pkgconf) --variable=libdir $(petsc.pc))/petsc/conf/va
 PETSC_FPPFLAGS = $(shell $(MAKE) --no-print-directory --silent petscvariables=$(petscvariables) -f petsc.fcincludes.mk)
 
 # Get the library flags needed for linking
-PETSC_LIBS = $(shell $(pkgconf) --libs $(PETSC_STATIC) $(petsc.pc))
+PETSC_LIBS = $(shell $(pkgconf) --libs $(STATIC) $(petsc.pc))
