@@ -1,3 +1,10 @@
+PETSC_FPPFLAGS :=
+PETSC_LIBS :=
+
+ifeq ($(WITH_PETSC),yes)
+  include petsc.mk
+endif
+
 # Compiler and flags
 FC = gfortran
 
@@ -5,8 +12,8 @@ PETSC_DIR = /Users/david/miniforge3/envs/petsc
 
 FFLAGS = -O2 -Wall -Wextra -fcheck=all -g  # Debugging and optimization flags
 
-CFLAGS = -I$(PETSC_DIR)/include
-LDFLAGS = -L$(PETSC_DIR)/lib -lpetsc
+CFLAGS = $(PETSC_FPPFLAGS)
+LDFLAGS = $(PETSC_LIBS)
 
 # Program name
 TARGET = sparse_solver_test
@@ -19,7 +26,8 @@ OBJS1 = $(SRCS:.f90=.o)
 OBJS = $(OBJS1:.F90=.o)
 
 # Default target
-all: $(TARGET)
+all:
+	$(MAKE) $(TARGET) WITH_PETSC=yes
 
 # Rule to build the target executable
 $(TARGET): $(OBJS)
