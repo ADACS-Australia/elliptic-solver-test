@@ -1,0 +1,22 @@
+#!/bin/bash
+
+PETSC_PC=$(pkg-config --path petsc || pkg-config --path PETSc || if [ -d "${PETSC_DIR}" ]; then find "${PETSC_DIR}" -type f -iname petsc.pc 2>/dev/null | head -n 1; fi)
+
+if [ -z "$PETSC_PC" ]; then
+  echo "ERROR: $0: line $LINENO: Unable to find PETSc pkg-config file. Please set PETSC_DIR or install PETSc." 1>&2
+  exit 1
+fi
+
+libdir=$(pkg-config --variable=libdir "${PETSC_PC}")
+
+if [ -z "$libdir" ]; then
+  echo "ERROR: $0: line $LINENO: Unable to determine PETSc library directory." 1>&2
+  exit 1
+fi
+
+make --no-print-directory --silent -f- <<EOF
+include $libdir/petsc/conf/petscvariables
+
+dummy:
+	@echo "\$(PETSC_FC_INCLUDES)"
+EOF

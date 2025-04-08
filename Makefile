@@ -1,19 +1,21 @@
-PETSC_FPPFLAGS :=
-PETSC_LIBS :=
-
-ifeq ($(WITH_PETSC),yes)
-  include petsc.mk
+# Useful as an escape hatch if libpetsc.so was not compiled properly
+# and has missing symbols from external libraries.
+ifeq ($(PETSC_PC_STATIC), yes)
+  STATIC = "--static"
+else
+  STATIC =
 endif
 
+PETSC_PC = $(shell pkg-config --path petsc || pkg-config --path PETSc || if [ -n "${PETSC_DIR}" ] && [ -d "${PETSC_DIR}" ]; then find "${PETSC_DIR}" -type f -iname petsc.pc 2>/dev/null | head -n 1; fi)
+PETSC_INCLUDE ?= $(shell pkg-config --cflags $(PETSC_PC) 2>/dev/null)
+PETSC_LDFLAGS ?= $(shell pkg-config $(STATIC) --libs $(PETSC_PC) 2>/dev/null)
+
 # Compiler and flags
-FC = gfortran
+FC := gfortran
+FFLAGS := -O2 -Wall -Wextra -fcheck=all -g  # Debugging and optimization flags
 
-PETSC_DIR = /Users/david/miniforge3/envs/petsc
-
-FFLAGS = -O2 -Wall -Wextra -fcheck=all -g  # Debugging and optimization flags
-
-CFLAGS = $(PETSC_FPPFLAGS)
-LDFLAGS = $(PETSC_LIBS)
+CFLAGS := $(PETSC_INCLUDE)
+LDFLAGS := $(PETSC_LDFLAGS)
 
 # Program name
 TARGET = sparse_solver_test
@@ -26,8 +28,7 @@ OBJS1 = $(SRCS:.f90=.o)
 OBJS = $(OBJS1:.F90=.o)
 
 # Default target
-all:
-	$(MAKE) $(TARGET) WITH_PETSC=yes
+all: $(TARGET)
 
 # Rule to build the target executable
 $(TARGET): $(OBJS)
@@ -47,3 +48,8 @@ clean:
 
 # Phony targets (not actual files)
 .PHONY: all clean
+
+print-petsc:
+	@echo "PETSC_PC: $(PETSC_PC)"
+	@echo "PETSC_INCLUDE: $(PETSC_INCLUDE)"
+	@echo "PETSC_LDFLAGS: $(PETSC_LDFLAGS)"
