@@ -11,6 +11,7 @@ module petsc_routines
   Mat :: A_petsc
   Vec :: x_petsc, b_petsc
   KSP :: ksp
+  PC :: pc
 
   contains
 
@@ -55,6 +56,7 @@ module petsc_routines
     PetscInt    :: n
     PetscScalar :: val
     PetscScalar, pointer :: vec_ptr(:)
+    real(8) :: start_time, end_time
 
     ! Set matrix and vector size
     n = size(b)
@@ -94,6 +96,11 @@ module petsc_routines
     call KSPCreate(PETSC_COMM_WORLD, ksp, ierr)
     call KSPSetOperators(ksp, A_petsc, A_petsc, ierr)
     call KSPSetFromOptions(ksp, ierr)
+    call KSPGetPC(ksp,pc,ierr)
+    call cpu_time(start_time)
+    call PCSetup(pc,ierr)
+    call cpu_time(end_time)
+    print*, "    PC setup: ", end_time - start_time
     call KSPSetup(ksp, ierr)
 
   end subroutine setup_petsc
