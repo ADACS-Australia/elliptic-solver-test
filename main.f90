@@ -3,6 +3,7 @@ program test_sparse_solver
   use setup, only: setup_system
   use solver, only: solve_sparse_system, miccg_solver, petsc_solver
   use tools, only: verify, compare
+  use mpi_utils, only: init_mpi, finalize_mpi
 
   implicit none
 
@@ -11,6 +12,8 @@ program test_sparse_solver
   real(8), allocatable :: b(:) ! Right-hand side vector
   real(8), allocatable :: x_ref(:) ! Reference solution
   logical, parameter :: use_reference_matrix = .true.
+
+  call init_mpi()
 
   call setup_system(cg, x, b, x_ref, use_reference_matrix)
 
@@ -27,5 +30,7 @@ program test_sparse_solver
   call solve_sparse_system(cg, b, x, petsc_solver)
   call verify(cg, x, b)
   if (use_reference_matrix) call compare(x, x_ref)
+
+  call finalize_mpi()
 
 end program test_sparse_solver

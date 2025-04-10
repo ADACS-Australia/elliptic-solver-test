@@ -2,6 +2,8 @@ module petsc_routines
   use datatype, only: cg_set
 #include <petsc/finclude/petsc.h>
   use petsc
+  use mpi_utils, only: myrank, stop_mpi
+  use mpi, only: MPI_COMM_WORLD
   implicit none
   private
 
@@ -21,14 +23,27 @@ module petsc_routines
     real(8), allocatable, intent(inout) :: x(:)  ! Input vector (right-hand side or initial guess), contains the solution on output
     real(8), intent(out) :: pc_time, ksp_time
     integer, intent(out) :: iterations
+    integer :: size
 
     ! Initialise PETSc and setup all the data structures
+    print*,"calling init_petsc()"
     call init_petsc()
-    call setup_petsc(cg, b, pc_time)
 
+    print*, "MPI_COMM_WORLD", MPI_COMM_WORLD
+    print*, "PETSC_COMM_WORLD", PETSC_COMM_WORLD
+    call MPI_Comm_size(MPI_COMM_WORLD, size, ierr)
+    print*, myrank, "MPI_COMM_SIZE", size
+    call MPI_Comm_size(PETSC_COMM_WORLD, size, ierr)
+    print*, myrank, "PETSC_COMM_SIZE", size
+
+    print*,"calling setup_petsc()"
+    call setup_petsc(cg, b, pc_time)
+    print*,"calling solve_petsc()"
     call solve_petsc(ksp_time)
+    print*,"calling KSPGetiterationNumber()"
     call KSPGetIterationNumber(ksp, iterations, ierr)
 
+    print*,"calling get_solution_f90()"
     ! Get the solution back into a fortran array
     call get_solution_f90(x)
 
@@ -37,8 +52,10 @@ module petsc_routines
     ! View matrix
     ! call MatView(A_petsc, PETSC_VIEWER_STDOUT_WORLD, ierr)
 
+    print*,"calling cleanup_petsc()"
     ! Clean up PETSc and free all the data structures
     call cleanup_petsc()
+    print*,"calling finalise_petsc()"
     call finalise_petsc()
 
   end subroutine solve_system_petsc
@@ -52,7 +69,7 @@ module petsc_routines
     type(cg_set), intent(inout) :: cg
     real(8), allocatable, intent(in) :: b(:)  ! Right-hand side vector
     real(8), intent(out) :: pc_time
-    integer :: row, col, d
+    integer :: row, col, d, row_start, row_end, n_vec
     PetscInt    :: n
     PetscScalar :: val
     PetscScalar, pointer :: vec_ptr(:)
@@ -63,7 +80,10 @@ module petsc_routines
 
     ! Create matrix and vectors
     call MatCreate(PETSC_COMM_WORLD, A_petsc, ierr)
+    ! call MatSetType(A_petsc, MATSBAIJ, ierr)
     call MatSetSizes(A_petsc, PETSC_DECIDE, PETSC_DECIDE, n, n, ierr)
+    ! call MatSetOption(A_petsc,MAT_SPD,PETSC_TRUE, ierr)
+    ! call MatSetOption(A_petsc,MAT_SPD_ETERNAL,PETSC_TRUE, ierr)
     call MatSetFromOptions(A_petsc, ierr)
     call MatSetUp(A_petsc, ierr)
 
@@ -73,7 +93,12 @@ module petsc_routines
 
     call VecDuplicate(b_petsc, x_petsc, ierr)
 
-    do row = 1, cg%lmax
+    call MatGetOwnershipRange(A_petsc, row_start, row_end, ierr)
+    print*, myrank, "    PETSc matrix ownership range: ", row_start, row_end
+    ! call stop_mpi(1)
+
+    ! do row = 1, cg%lmax
+    do row = row_start+1, row_end
       do d = 1, cg%Adiags
         col = row + cg%ia(d)  ! Compute column index
         if (col >= 1 .and. col <= cg%lmax) then
@@ -89,7 +114,10 @@ module petsc_routines
 
     ! Set right-hand side vector b
     call VecGetArrayF90(b_petsc, vec_ptr, ierr)
-    vec_ptr(:) = b(:)
+    call VecGetLocalSize(b_petsc, n_vec, ierr)
+    print*, myrank, "    PETSc vector size: ", n_vec
+    print*, myrank, "    row_end-row_start: ", row_end-row_start
+    vec_ptr(row_start+1:row_end) = b(row_start+1:row_end)
     call VecRestoreArrayF90(b_petsc, vec_ptr, ierr)
 
     ! Create linear solver context
@@ -117,9 +145,14 @@ module petsc_routines
   subroutine get_solution_f90(x)
     real(8), allocatable, intent(inout) :: x(:)
     PetscScalar, pointer :: vec_ptr(:)
+    integer :: n_vec
 
+    print*,'size(x)',size(x)
     call VecGetArrayF90(x_petsc, vec_ptr, ierr)
+    call VecGetLocalSize(x_petsc, n_vec, ierr)
+    print*, myrank, "    PETSc vector size: ", n_vec
     x(:) = vec_ptr(:)
+    ! x = 1.0
     call VecRestoreArrayF90(x_petsc, vec_ptr, ierr)
 
   end subroutine get_solution_f90

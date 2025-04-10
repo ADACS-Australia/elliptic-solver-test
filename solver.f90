@@ -1,5 +1,6 @@
 module solver
   use datatype, only: cg_set
+  use mpi_utils, only: myrank
   implicit none
   private
 
@@ -22,30 +23,34 @@ module solver
 
     select case (solver)
     case (miccg_solver)
-      print*, "--> Solving using hormone MICCG..."
-      call cpu_time(start_time)
-      call get_preconditioner(cg)
-      call cpu_time(end_time)
-      pc_time = end_time - start_time
-      call cpu_time(start_time)
-      call miccg(cg, b, x)
-      call cpu_time(end_time)
-      ksp_time = end_time - start_time
+      if (myrank==0) then
+        print*, "--> Solving using hormone MICCG..."
+        call cpu_time(start_time)
+        call get_preconditioner(cg)
+        call cpu_time(end_time)
+        pc_time = end_time - start_time
+        call cpu_time(start_time)
+        call miccg(cg, b, x)
+        call cpu_time(end_time)
+        ksp_time = end_time - start_time
+      endif
 
     case (petsc_solver)
-      print*, "--> Solving using PETSc..."
+      if (myrank==0) print*, "--> Solving using PETSc..."
       call solve_system_petsc(cg, b, x, pc_time, ksp_time, iterations)
-      print*, "    Converged after ", iterations, " iterations"
+      if (myrank==0) print*, "    Converged after ", iterations, " iterations"
 
     case default
       stop "Error: Unknown solver"
 
     end select
 
-    print*, "    Time taken (PC) : ", pc_time
-    print*, "    Time taken (KSP): ", ksp_time
-    print*, "    Total time      : ", pc_time + ksp_time
-
+    ! TODO: fix timings for MPI
+    if (myrank==0) then
+      print*, "    Time taken (PC) : ", pc_time
+      print*, "    Time taken (KSP): ", ksp_time
+      print*, "    Total time      : ", pc_time + ksp_time
+    endif
   end subroutine solve_sparse_system
 
 end module solver

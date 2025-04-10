@@ -15,8 +15,13 @@ PETSC_INCLUDE ?= $(shell pkg-config --cflags $(PETSC_PC) 2>/dev/null)
 PETSC_LDFLAGS ?= $(shell pkg-config $(STATIC) --libs $(PETSC_PC) 2>/dev/null)
 
 # Compiler and flags
-FC := gfortran
-FFLAGS := -O2 -Wall -Wextra -fcheck=all -g  # Debugging and optimization flags
+ifeq ($(MPI), yes)
+  FC := mpifort
+else
+  FC := gfortran
+endif
+
+FFLAGS := -O2 -Wall -Wextra -fcheck=all -g
 
 CFLAGS := $(PETSC_INCLUDE)
 LDFLAGS := $(PETSC_LDFLAGS)
@@ -25,7 +30,7 @@ LDFLAGS := $(PETSC_LDFLAGS)
 TARGET = sparse_solver_test
 
 # Source files
-SRCS = datatype.f90 hormone_routines.f90 tools.f90 petsc_routines.F90 setup.f90 solver.f90 main.f90
+SRCS = mpi_utils.F90 datatype.f90 hormone_routines.f90 tools.f90 petsc_routines.F90 setup.f90 solver.f90 main.f90
 
 # Object files (automatically generated from source files)
 OBJS1 = $(SRCS:.f90=.o)
