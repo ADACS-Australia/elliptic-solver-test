@@ -17,26 +17,32 @@ module solver
     real(8), allocatable, intent(in)    :: b(:)  ! Right-hand side vector
     real(8), allocatable, intent(inout) :: x(:)  ! Input vector (right-hand side or initial guess), contains the solution on output
     integer, intent(in) :: solver
-    real(8) :: start_time, end_time
+    real(8) :: start_time, end_time, pc_time, ksp_time
 
     select case (solver)
     case (miccg_solver)
       print*, "--> Solving using hormone MICCG..."
       call cpu_time(start_time)
       call get_preconditioner(cg)
+      call cpu_time(end_time)
+      pc_time = end_time - start_time
+      call cpu_time(start_time)
       call miccg(cg, b, x)
       call cpu_time(end_time)
+      ksp_time = end_time - start_time
 
     case (petsc_solver)
       print*, "--> Solving using PETSc..."
-      call solve_system_petsc(cg, b, x, start_time, end_time)
+      call solve_system_petsc(cg, b, x, pc_time, ksp_time)
 
     case default
       stop "Error: Unknown solver"
 
     end select
 
-    print*, "    Time taken: ", end_time - start_time
+    print*, "    Time taken (PC) : ", pc_time
+    print*, "    Time taken (KSP): ", ksp_time
+    print*, "    Total time      : ", pc_time + ksp_time
 
   end subroutine solve_sparse_system
 

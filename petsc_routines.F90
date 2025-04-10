@@ -15,20 +15,17 @@ module petsc_routines
 
   contains
 
-  subroutine solve_system_petsc(cg,b,x,start_time,end_time)
+  subroutine solve_system_petsc(cg,b,x,pc_time,ksp_time)
     type(cg_set), intent(inout) :: cg
     real(8), allocatable, intent(in)    :: b(:)  ! Right-hand side vector
     real(8), allocatable, intent(inout) :: x(:)  ! Input vector (right-hand side or initial guess), contains the solution on output
-    real(8), intent(out) :: start_time, end_time
+    real(8), intent(out) :: pc_time, ksp_time
 
     ! Initialise PETSc and setup all the data structures
     call init_petsc()
-    call setup_petsc(cg, b)
+    call setup_petsc(cg, b, pc_time)
 
-    ! Only time the actual solve
-    call cpu_time(start_time)
-    call solve_petsc()
-    call cpu_time(end_time)
+    call solve_petsc(ksp_time)
 
     ! Get the solution back into a fortran array
     call get_solution_f90(x)
@@ -49,9 +46,10 @@ module petsc_routines
     if (ierr /= 0) stop 'PETSc initialization failed'
   end subroutine init_petsc
 
-  subroutine setup_petsc(cg,b)
+  subroutine setup_petsc(cg,b,pc_time)
     type(cg_set), intent(inout) :: cg
     real(8), allocatable, intent(in) :: b(:)  ! Right-hand side vector
+    real(8), intent(out) :: pc_time
     integer :: row, col, d
     PetscInt    :: n
     PetscScalar :: val
@@ -100,13 +98,18 @@ module petsc_routines
     call cpu_time(start_time)
     call PCSetup(pc,ierr)
     call cpu_time(end_time)
-    print*, "    PC setup: ", end_time - start_time
     call KSPSetup(ksp, ierr)
+    pc_time = end_time - start_time
 
   end subroutine setup_petsc
 
-  subroutine solve_petsc
+  subroutine solve_petsc(ksp_time)
+    real(8), intent(out) :: ksp_time
+    real(8) :: start_time, end_time
+    call cpu_time(start_time)
     call KSPSolve(ksp, b_petsc, x_petsc, ierr)
+    call cpu_time(end_time)
+    ksp_time = end_time - start_time
   end subroutine solve_petsc
 
   subroutine get_solution_f90(x)
