@@ -15,17 +15,19 @@ module petsc_routines
 
   contains
 
-  subroutine solve_system_petsc(cg,b,x,pc_time,ksp_time)
+  subroutine solve_system_petsc(cg,b,x,pc_time,ksp_time,iterations)
     type(cg_set), intent(inout) :: cg
     real(8), allocatable, intent(in)    :: b(:)  ! Right-hand side vector
     real(8), allocatable, intent(inout) :: x(:)  ! Input vector (right-hand side or initial guess), contains the solution on output
     real(8), intent(out) :: pc_time, ksp_time
+    integer, intent(out) :: iterations
 
     ! Initialise PETSc and setup all the data structures
     call init_petsc()
     call setup_petsc(cg, b, pc_time)
 
     call solve_petsc(ksp_time)
+    call KSPGetIterationNumber(ksp, iterations, ierr)
 
     ! Get the solution back into a fortran array
     call get_solution_f90(x)

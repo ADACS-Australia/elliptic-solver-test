@@ -18,6 +18,7 @@ module solver
     real(8), allocatable, intent(inout) :: x(:)  ! Input vector (right-hand side or initial guess), contains the solution on output
     integer, intent(in) :: solver
     real(8) :: start_time, end_time, pc_time, ksp_time
+    integer :: iterations
 
     select case (solver)
     case (miccg_solver)
@@ -33,7 +34,8 @@ module solver
 
     case (petsc_solver)
       print*, "--> Solving using PETSc..."
-      call solve_system_petsc(cg, b, x, pc_time, ksp_time)
+      call solve_system_petsc(cg, b, x, pc_time, ksp_time, iterations)
+      print*, "    Converged after ", iterations, " iterations"
 
     case default
       stop "Error: Unknown solver"
