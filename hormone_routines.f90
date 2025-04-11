@@ -88,7 +88,9 @@ subroutine miccg(cg,b,x)
 
     !++++++++++ check convergence ++++++++++!
     if(error<cgerr**2*normb) then
+      !$omp single
       print*, "    Converged after ", n, " iterations"
+      !$omp end single
       exit main_loop
     endif
     !+++++++++++++++++++++++++++++++++++++++!
