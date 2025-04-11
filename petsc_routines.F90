@@ -22,17 +22,16 @@ module petsc_routines
     real(8), allocatable, intent(inout) :: x(:)  ! Input vector (right-hand side or initial guess), contains the solution on output
     real(8), intent(out) :: pc_time, ksp_time
     integer, intent(out) :: iterations
-    integer :: row_start, row_end
 
     ! Initialise PETSc and setup all the data structures
     call init_petsc()
-    call setup_petsc(cg, b, pc_time, row_start, row_end)
+    call setup_petsc(cg, b, x, pc_time)
 
     call solve_petsc(ksp_time)
     call KSPGetIterationNumber(ksp, iterations, ierr)
 
     ! Get the solution back into a fortran array
-    call get_solution_f90(x, row_start)
+    call get_solution_f90(x)
 
     ! View the solution
     ! call VecView(x_petsc, PETSC_VIEWER_STDOUT_WORLD, ierr)
@@ -50,11 +49,11 @@ module petsc_routines
     if (ierr /= 0) stop 'PETSc initialization failed'
   end subroutine init_petsc
 
-  subroutine setup_petsc(cg,b,pc_time,row_start,row_end)
+  subroutine setup_petsc(cg,b,x,pc_time)
     type(cg_set), intent(inout) :: cg
-    real(8), allocatable, intent(in) :: b(:)  ! Right-hand side vector
+    real(8), allocatable, intent(in) :: x(:), b(:)  ! Right-hand side vector
     real(8), intent(out) :: pc_time
-    integer, intent(out) :: row_start, row_end
+    integer :: row_start, row_end
     integer :: row, col, d, n_vec, i
     PetscInt    :: n
     PetscScalar :: val
@@ -83,6 +82,14 @@ module petsc_routines
     print*, myrank, "    PETSc matrix ownership range: ", row_start, row_end
     ! call stop_mpi(1)
 
+    ! Initialise x values
+    call VecGetArrayF90(x_petsc, vec_ptr, ierr)
+    call VecGetLocalSize(x_petsc, n_vec, ierr)
+    do i=1, n_vec
+      vec_ptr(i) = x(row_start+i)
+    end do
+    call VecRestoreArrayF90(x_petsc, vec_ptr, ierr)
+
     ! do row = 1, cg%lmax
     do row = row_start+1, row_end
       do d = 1, cg%Adiags
@@ -109,6 +116,7 @@ module petsc_routines
     ! Create linear solver context
     call KSPCreate(PETSC_COMM_WORLD, ksp, ierr)
     call KSPSetOperators(ksp, A_petsc, A_petsc, ierr)
+    call KSPSetInitialGuessNonzero(ksp, PETSC_TRUE, ierr)
     call KSPSetFromOptions(ksp, ierr)
     call KSPGetPC(ksp,pc,ierr)
     call cpu_time(start_time)
@@ -129,9 +137,8 @@ module petsc_routines
   end subroutine solve_petsc
 
   ! Get the solution back into a fortran array, on ALL the MPI ranks
-  subroutine get_solution_f90(x,row_start)
+  subroutine get_solution_f90(x)
     real(8), allocatable, intent(inout) :: x(:)
-    integer, intent(in) :: row_start
     PetscScalar, pointer :: vec_ptr(:)
     VecScatter :: scatter
     Vec :: x_seq

@@ -1,7 +1,7 @@
 program test_sparse_solver
   use datatype, only: cg_set
   use setup, only: setup_system
-  use solver, only: solve_sparse_system, miccg_solver, petsc_solver
+  use solver, only: solve_sparse_system, miccg_solver
   use tools, only: verify, compare
   use mpi_utils, only: init_mpi, finalize_mpi, myrank, barrier_mpi
 
