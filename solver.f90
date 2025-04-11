@@ -23,17 +23,15 @@ module solver
 
     select case (solver)
     case (miccg_solver)
-      if (myrank==0) then
-        print*, "--> Solving using hormone MICCG..."
-        call cpu_time(start_time)
-        call get_preconditioner(cg)
-        call cpu_time(end_time)
-        pc_time = end_time - start_time
-        call cpu_time(start_time)
-        call miccg(cg, b, x)
-        call cpu_time(end_time)
-        ksp_time = end_time - start_time
-      endif
+      print*, "--> Solving using hormone MICCG..."
+      call cpu_time(start_time)
+      call get_preconditioner(cg)
+      call cpu_time(end_time)
+      pc_time = end_time - start_time
+      call cpu_time(start_time)
+      call miccg(cg, b, x)
+      call cpu_time(end_time)
+      ksp_time = end_time - start_time
 
     case (petsc_solver)
       if (myrank==0) print*, "--> Solving using PETSc..."

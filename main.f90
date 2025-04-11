@@ -3,7 +3,7 @@ program test_sparse_solver
   use setup, only: setup_system
   use solver, only: solve_sparse_system, miccg_solver, petsc_solver
   use tools, only: verify, compare
-  use mpi_utils, only: init_mpi, finalize_mpi
+  use mpi_utils, only: init_mpi, finalize_mpi, myrank, barrier_mpi
 
   implicit none
 
@@ -17,20 +17,26 @@ program test_sparse_solver
 
   call setup_system(cg, x, b, x_ref, use_reference_matrix)
 
-  print*, "------------------------------------------"
+  ! MICCG not implemented for MPI
+  if (myrank==0) then
+    print*, "------------------------------------------"
 
-  ! Call the solver (placeholder implementation)
-  call solve_sparse_system(cg, b, x, miccg_solver)
-  call verify(cg, x, b)
-  if (use_reference_matrix) call compare(x, x_ref)
+    ! Call the solver (placeholder implementation)
+    call solve_sparse_system(cg, b, x, miccg_solver)
+    call verify(cg, x, b)
+    if (use_reference_matrix) call compare(x, x_ref)
 
-  print*, "------------------------------------------"
+    print*, "------------------------------------------"
+  endif
 
   !-- PETSc solver ---!
   call solve_sparse_system(cg, b, x, petsc_solver)
-  call verify(cg, x, b)
-  if (use_reference_matrix) call compare(x, x_ref)
+  call barrier_mpi()
+  if (myrank==0) then
+    call verify(cg, x, b)
+    if (use_reference_matrix) call compare(x, x_ref)
+  endif
 
-  call finalize_mpi()
+  ! call finalize_mpi() ! no need to call, petsc finalizes MPI
 
 end program test_sparse_solver
