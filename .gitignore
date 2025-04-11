@@ -1,4 +1,6 @@
 *.mod
 *.o
 .vscode
-sparse_solver_test
+run_all
+run_miccg
+run_petsc

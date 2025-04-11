@@ -28,20 +28,26 @@ endif
 FFLAGS := -O2 -Wall -Wextra -fcheck=all -g -fopenmp
 
 # Program name
-TARGET = sparse_solver_test
+TARGETS = run_all run_miccg run_petsc
 
 # Source files
-SRCS = mpi_utils.F90 datatype.f90 hormone_routines.f90 tools.f90 petsc_routines.F90 setup.f90 solver.f90 main.f90
+SRCS = mpi_utils.F90 datatype.f90 hormone_routines.f90 tools.f90 petsc_routines.F90 setup.f90 solver.f90
 
 # Object files (automatically generated from source files)
 OBJS1 = $(SRCS:.f90=.o)
 OBJS = $(OBJS1:.F90=.o)
 
 # Default target
-all: $(TARGET)
+all: $(TARGETS)
 
 # Rule to build the target executable
-$(TARGET): $(OBJS)
+run_all: $(OBJS) main.o
+	$(FC) $(FFLAGS) -o $@ $^ $(LDFLAGS)
+
+run_miccg: $(OBJS) run_miccg.o
+	$(FC) $(FFLAGS) -o $@ $^ $(LDFLAGS)
+
+run_petsc: $(OBJS) run_petsc.o
 	$(FC) $(FFLAGS) -o $@ $^ $(LDFLAGS)
 
 # Rule to compile Fortran source files into object files
@@ -54,7 +60,7 @@ $(TARGET): $(OBJS)
 
 # Clean up build files
 clean:
-	rm -f $(TARGET) *.o *.mod
+	rm -f $(TARGETS) *.o *.mod
 
 # Phony targets (not actual files)
 .PHONY: all clean
