@@ -14,17 +14,18 @@ PETSC_PC = $(shell pkg-config --path petsc || pkg-config --path PETSc || if [ -n
 PETSC_INCLUDE ?= $(shell pkg-config --cflags $(PETSC_PC) 2>/dev/null)
 PETSC_LDFLAGS ?= $(shell pkg-config $(STATIC) --libs $(PETSC_PC) 2>/dev/null)
 
+CFLAGS := $(PETSC_INCLUDE)
+LDFLAGS := $(PETSC_LDFLAGS)
+
 # Compiler and flags
 ifeq ($(MPI), yes)
   FC := mpifort
+  CFLAGS += -DMPI
 else
   FC := gfortran
 endif
 
 FFLAGS := -O2 -Wall -Wextra -fcheck=all -g
-
-CFLAGS := $(PETSC_INCLUDE)
-LDFLAGS := $(PETSC_LDFLAGS)
 
 # Program name
 TARGET = sparse_solver_test
