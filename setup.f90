@@ -1,5 +1,6 @@
 module setup
   use datatype, only: cg_set
+  use mpi_utils, only: myrank
   implicit none
   private
 
@@ -109,9 +110,9 @@ module setup
     read(13, '(I6)') cdiags
     close(13)
 
-    print*, "    lmax: ", lmax
-    print*, "    Adiags: ", Adiags
-    print*, "    cdiags: ", cdiags
+    if (myrank==0) print*, "    lmax: ", lmax
+    if (myrank==0) print*, "    Adiags: ", Adiags
+    if (myrank==0) print*, "    cdiags: ", cdiags
 
     ! Allocate arrays
     allocate(x(lmax), b(lmax))
@@ -163,10 +164,10 @@ module setup
   logical, intent(in) :: use_reference_matrix
 
   if (use_reference_matrix) then
-    print*, "--> Reading reference matrix"
+    if (myrank==0) print*, "--> Reading reference matrix"
     call setup_reference(cg, x, b, x_ref)
   else
-    print*, "--> Generating test matrix"
+    if (myrank==0) print*, "--> Generating test matrix"
     call setup_simple(cg, x, b)
   endif
 
