@@ -20,11 +20,12 @@ program test_sparse_solver
   !-- PETSc solver ---!
   call solve_sparse_system(cg, b, x, petsc_solver)
   call barrier_mpi()
+
   if (myrank==0) then
     call verify(cg, x, b)
     if (use_reference_matrix) call compare(x, x_ref)
   endif
 
-  ! call finalize_mpi() ! no need to call, petsc finalizes MPI
+  call finalize_mpi()
 
 end program test_sparse_solver

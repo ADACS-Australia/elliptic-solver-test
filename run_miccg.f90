@@ -32,6 +32,6 @@ program test_sparse_solver
   ! Wait for master to finish doing MICCG
   call barrier_mpi()
 
-  ! call finalize_mpi() ! no need to call, petsc finalizes MPI
+  call finalize_mpi()
 
 end program test_sparse_solver

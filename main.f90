@@ -40,6 +40,6 @@ program test_sparse_solver
     if (use_reference_matrix) call compare(x, x_ref)
   endif
 
-  ! call finalize_mpi() ! no need to call, petsc finalizes MPI
+  call finalize_mpi()
 
 end program test_sparse_solver
