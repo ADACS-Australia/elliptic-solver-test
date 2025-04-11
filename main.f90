@@ -29,6 +29,9 @@ program test_sparse_solver
     print*, "------------------------------------------"
   endif
 
+  ! Wait for master to finish doing MICCG
+  call barrier_mpi()
+
   !-- PETSc solver ---!
   call solve_sparse_system(cg, b, x, petsc_solver)
   call barrier_mpi()
