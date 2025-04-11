@@ -25,7 +25,7 @@ else
   FC := gfortran
 endif
 
-FFLAGS := -O2 -Wall -Wextra -fcheck=all -g
+FFLAGS := -O2 -Wall -Wextra -fcheck=all -g -fopenmp
 
 # Program name
 TARGET = sparse_solver_test
