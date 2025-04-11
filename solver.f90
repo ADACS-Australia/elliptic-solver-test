@@ -1,6 +1,6 @@
 module solver
   use datatype, only: cg_set
-  use mpi_utils, only: myrank
+  use mpi_utils, only: myrank, barrier_mpi, allreduce_mpi
   implicit none
   private
 
@@ -36,8 +36,10 @@ module solver
     case (petsc_solver)
       if (myrank==0) print*, "--> Solving using PETSc..."
       call solve_system_petsc(cg, b, x, pc_time, ksp_time, iterations)
+      call barrier_mpi()
       if (myrank==0) print*, "    Converged after ", iterations, " iterations"
-
+      call allreduce_mpi('max', pc_time)
+      call allreduce_mpi('max', ksp_time)
     case default
       stop "Error: Unknown solver"
 
