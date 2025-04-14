@@ -1,6 +1,7 @@
 module solver
   use datatype, only: cg_set
   use mpi_utils, only: myrank, barrier_mpi, allreduce_mpi
+  use omp_lib
   implicit none
   private
 
@@ -24,13 +25,13 @@ module solver
     select case (solver)
     case (miccg_solver)
       print*, "--> Solving using hormone MICCG..."
-      call cpu_time(start_time)
+      start_time = omp_get_wtime()
       call get_preconditioner(cg)
-      call cpu_time(end_time)
+      end_time = omp_get_wtime()
       pc_time = end_time - start_time
-      call cpu_time(start_time)
+      start_time = omp_get_wtime()
       call miccg(cg, b, x)
-      call cpu_time(end_time)
+      end_time = omp_get_wtime()
       ksp_time = end_time - start_time
 
     case (petsc_solver)

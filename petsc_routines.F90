@@ -3,6 +3,7 @@ module petsc_routines
 #include <petsc/finclude/petsc.h>
   use petsc
   use mpi_utils, only: myrank, stop_mpi
+  use omp_lib
   implicit none
   private
 
@@ -119,9 +120,9 @@ module petsc_routines
     call KSPSetInitialGuessNonzero(ksp, PETSC_TRUE, ierr)
     call KSPSetFromOptions(ksp, ierr)
     call KSPGetPC(ksp,pc,ierr)
-    call cpu_time(start_time)
+    start_time = omp_get_wtime()
     call PCSetup(pc,ierr)
-    call cpu_time(end_time)
+    end_time = omp_get_wtime()
     call KSPSetup(ksp, ierr)
     pc_time = end_time - start_time
 
@@ -130,9 +131,9 @@ module petsc_routines
   subroutine solve_petsc(ksp_time)
     real(8), intent(out) :: ksp_time
     real(8) :: start_time, end_time
-    call cpu_time(start_time)
+    start_time = omp_get_wtime()
     call KSPSolve(ksp, b_petsc, x_petsc, ierr)
-    call cpu_time(end_time)
+    end_time = omp_get_wtime()
     ksp_time = end_time - start_time
   end subroutine solve_petsc
 
