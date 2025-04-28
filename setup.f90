@@ -60,6 +60,11 @@ module setup
   real(8), allocatable, intent(inout) :: x(:), b(:), x_ref(:)
   integer :: lmax, Adiags, cdiags  ! Size of the matrix
 
+  character(len=*), parameter :: grv_path = "reference_matrix/grv/"
+  character(len=*), parameter :: rad_path = "reference_matrix/rad/"
+  character(len=256) :: ref_path
+  integer, parameter :: problem_type = 1  ! 1 for rad, 2 for grv
+
     ! Files dumped from radshock_x test, using:
 
     ! ! Export A and ia from cg into separate binary dump files
@@ -93,20 +98,29 @@ module setup
 
     ! stop 'Files dumped'
 
+    ! Decide which reference to load based on the problem_type parameter
+    select case (problem_type)
+      case (1)
+      ref_path = rad_path
+      case (2)
+      ref_path = grv_path
+      case default
+      stop "Invalid problem_type specified"
+    end select
 
     ! Read array sizes from text file
-    open(unit=13, file="reference_matrix/array_size.txt", status="old", &
-         form="formatted", action="read")
+    open(unit=13, file=trim(ref_path)//"array_size.txt", status="old", &
+       form="formatted", action="read")
     read(13, '(I6)') lmax
     close(13)
 
-    open(unit=13, file="reference_matrix/Adiags.txt", status="old", &
-    form="formatted", action="read")
+    open(unit=13, file=trim(ref_path)//"Adiags.txt", status="old", &
+       form="formatted", action="read")
     read(13, '(I6)') Adiags
     close(13)
 
-    open(unit=13, file="reference_matrix/cdiags.txt", status="old", &
-    form="formatted", action="read")
+    open(unit=13, file=trim(ref_path)//"cdiags.txt", status="old", &
+       form="formatted", action="read")
     read(13, '(I6)') cdiags
     close(13)
 
@@ -127,30 +141,30 @@ module setup
     cg%cdiags = cdiags
 
     ! Read matrix data from binary dumps
-    open(unit=10, file="reference_matrix/A_dump.bin", status="old", form="unformatted")
+    open(unit=10, file=trim(ref_path)//"A_dump.bin", status="old", form="unformatted")
     read(10) cg%A
     close(10)
 
-    open(unit=10, file="reference_matrix/ia_dump.bin", status="old", form="unformatted")
+    open(unit=10, file=trim(ref_path)//"ia_dump.bin", status="old", form="unformatted")
     read(10) cg%ia
     close(10)
 
-    open(unit=10, file="reference_matrix/ic_dump.bin", status="old", form="unformatted")
+    open(unit=10, file=trim(ref_path)//"ic_dump.bin", status="old", form="unformatted")
     read(10) cg%ic
     close(10)
 
     ! Read right-hand side vector
-    open(unit=10, file="reference_matrix/rsrc_dump.bin", status="old", form="unformatted")
+    open(unit=10, file=trim(ref_path)//"rsrc_dump.bin", status="old", form="unformatted")
     read(10) b
     close(10)
 
     ! Read initial x vector
-    open(unit=10, file="reference_matrix/x_dump.bin", status="old", form="unformatted")
+    open(unit=10, file=trim(ref_path)//"x_dump.bin", status="old", form="unformatted")
     read(10) x
     close(10)
 
     ! Read reference solution
-    open(unit=10, file="reference_matrix/x_updated.bin", status="old", form="unformatted")
+    open(unit=10, file=trim(ref_path)//"x_updated.bin", status="old", form="unformatted")
     read(10) x_ref
     close(10)
 
